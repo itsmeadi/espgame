@@ -22,29 +22,22 @@ func New(this *API) *API {
 }
 
 func (api *API) InitRoutes() {
-	http.HandleFunc("/signin", Wrapper(SignIn))
-	http.HandleFunc("/signup", Wrapper(SignUp))
-	http.HandleFunc("/signout", Wrapper(SignOut))
-	http.HandleFunc("/insert_question", Auth(Wrapper(InsertQuestion)))
-	http.HandleFunc("/getqa", Auth(Wrapper(GetQuestionAnswers)))
-	http.HandleFunc("/saveans", Auth(Wrapper(SaveAns)))
-	http.HandleFunc("/getscore", Auth(Wrapper(GetUserScore)))
+	http.HandleFunc("/signin", api.Wrapper(api.SignIn))
+	http.HandleFunc("/signup", api.Wrapper(api.SignUp))
+	http.HandleFunc("/signout", api.Wrapper(api.SignOut))
+	http.HandleFunc("/insert_question", api.Auth(api.Wrapper(api.InsertQuestion)))
+	http.HandleFunc("/getqa", api.Auth(api.Wrapper(api.GetQuestionAnswers)))
+	http.HandleFunc("/saveans", api.Auth(api.Wrapper(api.SaveAns)))
+	http.HandleFunc("/getscore", api.Auth(api.Wrapper(api.GetUserScore)))
 	http.Handle("/upload/", http.StripPrefix("/upload/", http.FileServer(http.Dir("./upload"))))
 
-
-
-	http.HandleFunc("/show_questions", Auth(ShowQuestion))
-	http.HandleFunc("/submit_ans", Auth(SubmitAns))
-	http.HandleFunc("/score", Auth(ShowScore))
-
-
-
-
-
+	http.HandleFunc("/show_questions", api.Auth(api.ShowQuestion))
+	http.HandleFunc("/submit_ans", api.Auth(api.SubmitAns))
+	http.HandleFunc("/score", api.Auth(api.ShowScore))
 
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./frontend"))))
 
-	//http.HandleFunc("/", api.Wrapper(api.TestServer))
+	//http.HandleFunc("/", api.api.Wrapper(api.api.TestServer))
 }
 
 //

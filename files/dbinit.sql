@@ -1,4 +1,4 @@
-drop database ESPGAME;
+#drop database ESPGAME;
 create database ESPGAME;
 
 #use database ESPGAME;

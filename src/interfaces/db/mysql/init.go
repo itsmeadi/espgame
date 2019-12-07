@@ -25,6 +25,6 @@ func init() {
 	if err != nil {
 		log.Fatal("Cannot init mysql err=", err)
 	}
-	initQueries()
+	Conn.initQueries()
 
 }

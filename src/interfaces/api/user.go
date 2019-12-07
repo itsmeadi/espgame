@@ -64,11 +64,11 @@ func (api *API) Auth(hand handler) handler {
 				w.Header().Set("Content-Type", "text/html")
 
 				http.Redirect(w, r, r.Host+"/signin", http.StatusSeeOther)
-				time.Sleep(time.Second*5)
+				time.Sleep(time.Second * 5)
 				return
 			}
 			ctx = context.WithValue(ctx, "user_id", cookie.Value)
-			r=r.WithContext(ctx)
+			r = r.WithContext(ctx)
 			hand(w, r)
 		})
 
@@ -128,13 +128,12 @@ func (api *API) ShowScore(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	w.Header().Set("Content-Type", "text/html")
 
-	uid,_:=ctx.Value("user_id").(string)
+	uid, _ := ctx.Value("user_id").(string)
 
 	score, err := api.Interactor.UseCase.GetScore(ctx, uid)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 	}
-
 
 	if err := templatego2.TemplateMap["score"].Execute(w, score); err != nil {
 		log.Printf("[ERROR] [Question] Render page error: %s\n", err)
@@ -147,7 +146,6 @@ func (api *API) ShowQuestion(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	w.Header().Set("Content-Type", "text/html")
-
 
 	ques, _ := api.Interactor.UseCase.GetQuestionsAnswers(ctx)
 
@@ -241,37 +239,35 @@ func (api *API) FileUpload(ctx context.Context, fh *multipart.FileHeader) (strin
 	return imageId, nil
 }
 
-func(api *API) SubmitAns(w http.ResponseWriter, r *http.Request) {
+func (api *API) SubmitAns(w http.ResponseWriter, r *http.Request) {
 
-	ctx:=r.Context()
-	uid,_:=ctx.Value("user_id").(string)
+	ctx := r.Context()
+	uid, _ := ctx.Value("user_id").(string)
 	if err := r.ParseForm(); err != nil {
 		// handle error
 	}
 
 	var qid, aid int64
 
-
 	for key, values := range r.PostForm {
-		ques:=strings.Split(key,"ques-")
-		if len(ques)>1{
-			qid,_=strconv.ParseInt(ques[1], 10, 64)
+		ques := strings.Split(key, "ques-")
+		if len(ques) > 1 {
+			qid, _ = strconv.ParseInt(ques[1], 10, 64)
 		}
-		if len(values)<1{
+		if len(values) < 1 {
 			continue
 		}
-		ans:=strings.Split(values[0],"radio-")
+		ans := strings.Split(values[0], "radio-")
 
-		if len(ans)>1{
-			aid,_=strconv.ParseInt(ans[1], 10, 64)
+		if len(ans) > 1 {
+			aid, _ = strconv.ParseInt(ans[1], 10, 64)
 		}
 		err := api.Interactor.UseCase.SaveAns(ctx, qid, aid, uid)
-		if err!=nil{
-			log.Println("ERR=",err)
+		if err != nil {
+			log.Println("ERR=", err)
 		}
 	}
 }
-
 
 func (api *API) GetUserScore(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 
@@ -322,8 +318,6 @@ func (api *API) GetScore(w http.ResponseWriter, r *http.Request) (interface{}, e
 func (api *API) TestServer(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	return "Server Locked and Loaded", nil
 }
-
-
 
 // templateFile defines the contents of a template to be stored in a file, for testing.
 type templateFile struct {

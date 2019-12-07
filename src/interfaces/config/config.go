@@ -1,5 +1,5 @@
 package config
 
 const (
-	DbStr="root:@/ESPGAME?parseTime=true&loc=Local"
+	DbStr = "root:@/ESPGAME?parseTime=true&loc=Local"
 )
