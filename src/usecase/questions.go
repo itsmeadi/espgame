@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	constant2 "github.com/ESPGame/src/entities/constant"
+	"github.com/ESPGame/src/entities/constant"
 	models2 "github.com/ESPGame/src/entities/models"
 	db2 "github.com/ESPGame/src/interfaces/db"
 )
@@ -24,6 +24,7 @@ type UseCaseInterface interface {
 	SaveAns(ctx context.Context, qID, aID int64, uID string) error
 	InsertAns(ctx context.Context, qID int64, media string) (int64, error)
 	SignIn(ctx context.Context, userId, pass string) (models2.User, error)
+	GetUser(ctx context.Context, userId string) (models2.User, error)
 	SignUp(ctx context.Context, user models2.User) error
 	GetScore(ctx context.Context, uid string) (models2.Score, error)
 }
@@ -38,11 +39,11 @@ func (ques *QuestionsUseCase) GetScore(ctx context.Context, uid string) (models2
 	var correct, pending, incorrect int64
 	for _, qa := range userQ {
 		switch int(qa.Correctness) {
-		case constant2.CorrectnessAnsCorrect:
+		case constant.CorrectnessAnsCorrect:
 			correct++
-		case constant2.CorrectnessAnsInCorrect:
+		case constant.CorrectnessAnsInCorrect:
 			incorrect++
-		case constant2.CorrectnessAnsPending:
+		case constant.CorrectnessAnsPending:
 			pending++
 		}
 	}
@@ -53,6 +54,26 @@ func (ques *QuestionsUseCase) GetScore(ctx context.Context, uid string) (models2
 	return score, nil
 }
 
+func (ques *QuestionsUseCase) SaveAns(ctx context.Context, qID, aID int64, uID string) error {
+	_, err := ques.QARepo.InsertUserQuestionAnswer(ctx,
+		models2.QuestionAnswer{
+			UserId:     uID,
+			AnswerId:   aID,
+			QuestionId: qID,
+		})
+
+	rowAff, err := ques.QARepo.UpdateUserQuestionsAnswered(ctx, constant.CorrectnessAnsCorrect, qID, aID, uID)
+	if err != nil {
+		return err
+	}
+	if rowAff < 1 {
+		return nil
+	}
+	_, err = ques.QARepo.UpdateUserQuestionsAnswered(ctx, constant.CorrectnessAnsCorrect, qID, aID, "")
+
+	return err
+}
+
 func (ques *QuestionsUseCase) GetQuestions(ctx context.Context) ([]models2.Question, error) {
 	questions, err := ques.QuesRepo.GetQuestions(ctx, 2, 5) //TODO //get question where answerd status is less than 2
 	if err != nil {
@@ -60,6 +81,7 @@ func (ques *QuestionsUseCase) GetQuestions(ctx context.Context) ([]models2.Quest
 	}
 	return questions, nil
 }
+
 func (ques *QuestionsUseCase) GetQuestionsAnswers(ctx context.Context) ([]models2.QuestionAnswersResponse, error) {
 
 	q, err := ques.GetQuestions(ctx)
@@ -91,15 +113,6 @@ func (ques *QuestionsUseCase) GetQuestionsAnswers(ctx context.Context) ([]models
 	return QA, nil
 }
 
-func (ques *QuestionsUseCase) SaveAns(ctx context.Context, qID, aID int64, uID string) error {
-	_, err := ques.QARepo.InsertUserQuestionAnswer(ctx,
-		models2.QuestionAnswer{
-			UserId:     uID,
-			AnswerId:   aID,
-			QuestionId: qID,
-		})
-	return err
-}
 func (ques *QuestionsUseCase) InsertRandomAns(ctx context.Context, qID int64, media string) (int64, error) {
 	return 0, nil
 }
@@ -126,7 +139,16 @@ func (ques *QuestionsUseCase) InsertQuestion(ctx context.Context, quesText, medi
 
 func (ques *QuestionsUseCase) SignIn(ctx context.Context, userId, pass string) (models2.User, error) {
 
-	user, err := ques.UserRepo.GetUser(ctx, userId, pass)
+	user, err := ques.UserRepo.GetUserByIdPass(ctx, userId, pass)
+	if err != nil {
+		return user, err
+	}
+	return user, err
+}
+
+func (ques *QuestionsUseCase) GetUser(ctx context.Context, userId string) (models2.User, error) {
+
+	user, err := ques.UserRepo.GetUserById(ctx, userId)
 	if err != nil {
 		return user, err
 	}

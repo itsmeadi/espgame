@@ -22,7 +22,7 @@ func New(this *API) *API {
 }
 
 func (api *API) InitRoutes() {
-	http.HandleFunc("/signin", api.Wrapper(api.SignIn))
+	http.HandleFunc("/signin", api.SignIn)
 	http.HandleFunc("/signup", api.Wrapper(api.SignUp))
 	http.HandleFunc("/signout", api.Wrapper(api.SignOut))
 	http.HandleFunc("/insert_question", api.Auth(api.Wrapper(api.InsertQuestion)))
@@ -34,6 +34,7 @@ func (api *API) InitRoutes() {
 	http.HandleFunc("/show_questions", api.Auth(api.ShowQuestion))
 	http.HandleFunc("/submit_ans", api.Auth(api.SubmitAns))
 	http.HandleFunc("/score", api.Auth(api.ShowScore))
+	//http.HandleFunc("/score", api.Auth(api.ShowScore))
 
 	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./frontend"))))
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/ESPGame/src/entities/constant"
 	models2 "github.com/ESPGame/src/entities/models"
 	templatego2 "github.com/ESPGame/src/templatego"
 	uuid "github.com/satori/go.uuid"
@@ -15,7 +16,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type handler func(w http.ResponseWriter, r *http.Request)
@@ -28,6 +28,8 @@ type Response struct {
 type Base struct {
 	Error error
 }
+
+var ErrUnAuthorized = errors.New("unauthorized")
 
 func (api *API) Wrapper(hand func(w http.ResponseWriter, r *http.Request) (interface{}, error)) handler {
 
@@ -63,8 +65,7 @@ func (api *API) Auth(hand handler) handler {
 				//w.WriteHeader(http.StatusUnauthorized)
 				w.Header().Set("Content-Type", "text/html")
 
-				http.Redirect(w, r, r.Host+"/signin", http.StatusSeeOther)
-				time.Sleep(time.Second * 5)
+				http.Redirect(w, r, r.Host+"/login.html", http.StatusSeeOther)
 				return
 			}
 			ctx = context.WithValue(ctx, "user_id", cookie.Value)
@@ -77,7 +78,7 @@ func (api *API) Auth(hand handler) handler {
 func sanitize(s string) string {
 	return html.EscapeString(s)
 }
-func (api *API) SignIn(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (api *API) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	id := sanitize(r.FormValue("username"))
@@ -86,17 +87,26 @@ func (api *API) SignIn(w http.ResponseWriter, r *http.Request) (interface{}, err
 	user, err := api.Interactor.UseCase.SignIn(ctx, id, pass)
 
 	if err != nil {
-		return nil, errors.New("invalid user")
+		w.Write([]byte("invalid user"))
+		return
+		//return nil, errors.New("invalid user")
 	}
+
 	cookie := &http.Cookie{Name: "user_login_esp", Value: user.Id, HttpOnly: false}
 	http.SetCookie(w, cookie)
-	return user, err
-
+	if user.UserType == constant.UserRoleAdmin {
+		http.Redirect(w, r, "/upload.html", http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, "/show_questions", http.StatusSeeOther)
+	}
+	return
 }
 func (api *API) SignOut(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 
 	cookie := &http.Cookie{Name: "user_login_esp", MaxAge: -1}
 	http.SetCookie(w, cookie)
+
+	http.Redirect(w, r, "/login.html", http.StatusSeeOther)
 	return "SignOut SuccessFull", nil
 
 }
@@ -119,6 +129,8 @@ func (api *API) SignUp(w http.ResponseWriter, r *http.Request) (interface{}, err
 	}
 	cookie := &http.Cookie{Name: "user_login_esp", Value: user.Id, HttpOnly: false}
 	http.SetCookie(w, cookie)
+
+	http.Redirect(w, r, "/login.html", http.StatusSeeOther)
 	return nil, err
 
 }
@@ -145,6 +157,7 @@ func (api *API) ShowScore(w http.ResponseWriter, r *http.Request) {
 func (api *API) ShowQuestion(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
+
 	w.Header().Set("Content-Type", "text/html")
 
 	ques, _ := api.Interactor.UseCase.GetQuestionsAnswers(ctx)
@@ -174,10 +187,29 @@ func (api *API) GetQuestionAnswers(w http.ResponseWriter, r *http.Request) (inte
 
 func (api *API) InsertQuestion(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 	ctx := r.Context()
-	return api.InsertQuestionAndUploadFile(ctx, r)
+
+	userId, ok := ctx.Value("user_id").(string)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil, ErrUnAuthorized
+	}
+	user, err := api.Interactor.UseCase.GetUser(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	if user.UserType != constant.UserRoleAdmin {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil, ErrUnAuthorized
+	}
+	_, err=api.InsertQuestionAndUploadFile(ctx, r)
+	if err!=nil{
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<script>alert("upload successfull");</script>`))
+	}
+	return nil,err
 }
 
-// This function returns the filename(to save in database) of the saved file
+// This function returns the filenames(to save in database) of the saved file
 // or an error if it occurs
 func (api *API) InsertQuestionAndUploadFile(ctx context.Context, r *http.Request) ([]string, error) {
 
@@ -191,8 +223,9 @@ func (api *API) InsertQuestionAndUploadFile(ctx context.Context, r *http.Request
 		return fileNames, errors.New("Invalid file question")
 	}
 
+	ques := r.FormValue("question_text")
 	imageId, err := api.FileUpload(ctx, fhsQues[0])
-	qid, err := api.Interactor.UseCase.InsertQuestion(ctx, "Match the image", "./upload/"+imageId)
+	qid, err := api.Interactor.UseCase.InsertQuestion(ctx, ques, "./upload/"+imageId)
 	if err != nil {
 		log.Println(err)
 	}
@@ -266,6 +299,7 @@ func (api *API) SubmitAns(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("ERR=", err)
 		}
+		http.Redirect(w, r, "/score", http.StatusSeeOther)
 	}
 }
 

@@ -268,7 +268,8 @@
 
                                 {{ range $j, $ans := $tag.Ans }}
                                     <div style="height: 250px;width: 250px;float: left;margin: 30px;">
-                                        <input type="radio" class="mcradio" value="radio-{{$ans.Id}}" id="radio-{{$ans.Id}}" name="ques-{{$tag.Ques.Id}}">
+                                        <input type="radio" class="mcradio" value="radio-{{$ans.Id}}"
+                                               id="radio-{{$ans.Id}}" name="ques-{{$tag.Ques.Id}}">
                                         <label for="radio-{{$ans.Id}}"><img style="max-width: 100%;max-height: 100%;"
                                                                             class="imagecontrol" border="0"
                                                                             onclick="javascript:QWUtils.imageZoomMouseClick(this);"
@@ -288,8 +289,8 @@
         {{end}}
 
         <nav class="navigationcontrols">
-            <div id="submitbutton" class="submitbutton">
-                <button class="submitbutton" type="submit">Submit
+            <div id="submitbutton" class="submitbutton" style="margin: 0px auto;width: 300px;border-radius: 20px;">
+                <button class="submitbutton" type="submit" style="width: 400px;height: 40px;border-radius: 20px;background-color: aliceblue;">Submit
                 </button>
             </div>
 

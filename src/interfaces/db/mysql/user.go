@@ -4,8 +4,11 @@ import (
 	"context"
 	"database/sql"
 	models2 "github.com/ESPGame/src/entities/models"
+	"github.com/ESPGame/src/interfaces/db"
 	"github.com/jmoiron/sqlx"
 )
+
+var _ db.UserDb = &DB{}
 
 func (Conn *DB) InsertUser(ctx context.Context, user models2.User) (int64, error) {
 
@@ -17,13 +20,24 @@ func (Conn *DB) InsertUser(ctx context.Context, user models2.User) (int64, error
 	return lID, err
 }
 
-func (Conn *DB) GetUser(ctx context.Context, id, pass string) (models2.User, error) {
+func (Conn *DB) GetUserByIdPass(ctx context.Context, id, pass string) (models2.User, error) {
 
 	var user models2.User
 
 	err := Conn.queries.GetUserByIdAndPass.GetContext(ctx, &user, id, pass)
 	if err == sql.ErrNoRows {
-		return user, nil
+		//return user, nil
+	}
+	return user, err
+}
+
+func (Conn *DB) GetUserById(ctx context.Context, id string) (models2.User, error) {
+
+	var user models2.User
+
+	err := Conn.queries.GetUserById.GetContext(ctx, &user, id)
+	if err == sql.ErrNoRows {
+		//return user, nil
 	}
 	return user, err
 }
@@ -92,6 +106,16 @@ func (Conn *DB) InsertUserQuestionAnswer(ctx context.Context, qa models2.Questio
 	}
 	lID, _ := res.LastInsertId()
 	return lID, err
+}
+
+func (Conn *DB) UpdateUserQuestionsAnswered(ctx context.Context, correctness int, qid, aid int64, uid string) (int64, error) {
+
+	res, err := Conn.queries.UpdateUserQuestionsAnswered.Exec(correctness, qid, aid, uid)
+	if err != nil {
+		return 0, err
+	}
+	rowAff, _ := res.RowsAffected()
+	return rowAff, err
 }
 
 func (Conn *DB) GetUserQuestionsFromUser(ctx context.Context, uid string, size int64) ([]models2.QuestionAnswer, error) {

@@ -13,7 +13,7 @@ create table ESPGAME.questions(
     id int(5) primary key NOT NULL AUTO_INCREMENT,
     question_text varchar(500),
     media_url varchar(500),
-    answered int(2)#no of people answered
+    answered int(2) #no of peodple answered
 );
 
 create table ESPGAME.answers(
@@ -29,5 +29,6 @@ create table ESPGAME.user_questions(
     user_id varchar(50) references user.id,
     question_id int(5) references questions.id,
     answer_id int(5) references answers.id,
-    correctness int(2) default 0
+    correctness int(2) default 0,
+    UNIQUE `unique_index`(`user_id`, `question_id`, `answer_id`)
 );

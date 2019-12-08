@@ -14,6 +14,7 @@ func init() {
 	myTemplates := make(map[string]string)
 	myTemplates["questions"] = base + "question.html"
 	myTemplates["score"] = base + "score.html"
+	myTemplates["upload"] = base + "upload.html"
 
 	for k, v := range myTemplates {
 		//t := template.Must(template.New("question").Parse(`{{define "T"}}Hello, {{.}}!{{end}}`))
