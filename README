@@ -18,16 +18,18 @@ Password:admin
 Create a new user to play the game
 
 To insert new Questions login as admin, u'll be redirected to add question page
-
+To insert multiple questions at once with random answer options(for testing) use url localhost:8080/insert_question_random
+To clear all past answers delete all rows from table ESPGAME.user_questions_answers
 
 ABOUT
 
 The application is written in GoLang, it uses The Clean Architecture
 https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
 
-DB files=files/dbinit.sql
-db dump=files/espdump.sql
-
+DB files  =  files/dbinit.sql
+db dump   =  files/espdump.sql
+APIs      =  src/interfaces/api/routes.go
+DB queries=  src/interfaces/db/mysql/queries.go
 
 
 CheckList

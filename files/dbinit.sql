@@ -13,7 +13,7 @@ create table ESPGAME.questions(
     id int(5) primary key NOT NULL AUTO_INCREMENT,
     question_text varchar(500),
     media_url varchar(500),
-    answered_by_users int(2) default 0
+    answered_by_users int(2) default 0      -- count of users that have answered this question
 );
 
 create table ESPGAME.answers(
