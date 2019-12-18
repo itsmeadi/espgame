@@ -38,10 +38,4 @@ CREATE INDEX q_idx
 CREATE INDEX uid_idx
     ON ESPGAME.user_questions_answers (user_id);
 
-create table ESPGAME.group(
-    id int(5) primary key NOT NULL AUTO_INCREMENT,
-    user_id varchar(50) default 0,
-    answered_by_users int(2) default 0
-);
-
 insert into ESPGAME.user (id,name,password, usertype) values('admin','admin','21232f297a57a5a743894a0e4a801fc3','admin'); -- insert admin user
