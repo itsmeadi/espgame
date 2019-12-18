@@ -8,10 +8,10 @@ type User struct {
 }
 
 type Question struct {
-	Id       int64  `db:"id"`
-	Question string `db:"question_text"`
-	MediaUrl string `db:"media_url"`
-	Answered int    `db:"answered"`
+	Id              int64  `db:"id"`
+	Question        string `db:"question_text"`
+	MediaUrl        string `db:"media_url"`
+	AnsweredByUsers int    `db:"answered_by_users"`
 }
 
 type Answers struct {
@@ -28,11 +28,12 @@ type QuestionAnswersResponse struct {
 }
 
 type QuestionAnswer struct {
-	Id          int64  `db:"id"`
-	UserId      string `db:"user_id"`
-	QuestionId  int64  `db:"question_id"`
-	AnswerId    int64  `db:"answer_id"`
-	Correctness int64  `db:"correctness"`
+	Id              int64  `db:"id"`
+	UserId          string `db:"user_id"`
+	QuestionId      int64  `db:"question_id"`
+	AnswerId        int64  `db:"answer_id"`
+	Correctness     int    `db:"correctness"`
+	AnsweredByUsers int64  `db:"answered_by_users"`
 }
 
 type Score struct {
@@ -40,4 +41,9 @@ type Score struct {
 	CorrectAnswer int64 `json:"correct_answer"`
 	PendingAns    int64 `json:"pending_ans"`
 	IncorrectAns  int64 `json:"incorrect_ans"`
+}
+
+type QuestionCount struct {
+	Count           int64 `db:"count"`
+	AnsweredByUsers int64 `db:"answered_by_users"`
 }

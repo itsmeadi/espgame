@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"github.com/ESPGame/src/entities/constant"
-	models2 "github.com/ESPGame/src/entities/models"
+	models "github.com/ESPGame/src/entities/models"
 	templatego2 "github.com/ESPGame/src/templatego"
 	uuid "github.com/satori/go.uuid"
 	"html"
@@ -82,7 +84,7 @@ func (api *API) SignIn(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	id := sanitize(r.FormValue("username"))
-	pass := sanitize(r.FormValue("password"))
+	pass := encrypt(r.FormValue("password"))
 
 	user, err := api.Interactor.UseCase.SignIn(ctx, id, pass)
 
@@ -95,7 +97,7 @@ func (api *API) SignIn(w http.ResponseWriter, r *http.Request) {
 	cookie := &http.Cookie{Name: "user_login_esp", Value: user.Id, HttpOnly: false}
 	http.SetCookie(w, cookie)
 	if user.UserType == constant.UserRoleAdmin {
-		http.Redirect(w, r, "/upload.html", http.StatusSeeOther)
+		http.Redirect(w, r, "/insert_question", http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/show_questions", http.StatusSeeOther)
 	}
@@ -111,14 +113,19 @@ func (api *API) SignOut(w http.ResponseWriter, r *http.Request) (interface{}, er
 
 }
 
+func encrypt(inp string) string {
+	hash := md5.Sum([]byte(inp))
+	return hex.EncodeToString(hash[:])
+}
+
 func (api *API) SignUp(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 
 	ctx := context.Background()
 
-	var user models2.User
+	var user models.User
 
 	user.Id = sanitize(r.FormValue("username"))
-	user.Password = sanitize(r.FormValue("password"))
+	user.Password = encrypt(r.FormValue("password"))
 	user.UserType = sanitize(r.FormValue("type"))
 	user.Name = sanitize(r.FormValue("name"))
 
@@ -159,11 +166,15 @@ func (api *API) ShowQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	w.Header().Set("Content-Type", "text/html")
-
-	ques, _ := api.Interactor.UseCase.GetQuestionsAnswers(ctx)
+	userId, ok := ctx.Value("user_id").(string)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		//return nil, ErrUnAuthorized
+	}
+	ques, _ := api.Interactor.UseCase.GetQuestionsAnswers(ctx, userId)
 
 	qtemplate := struct {
-		Ques []models2.QuestionAnswersResponse
+		Ques []models.QuestionAnswersResponse
 	}{
 		Ques: ques,
 	}
@@ -178,35 +189,83 @@ func (api *API) ShowQuestion(w http.ResponseWriter, r *http.Request) {
 func (api *API) GetQuestionAnswers(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 
 	ctx := r.Context()
-
-	res, err := api.Interactor.UseCase.GetQuestionsAnswers(ctx)
+	userId, ok := ctx.Value("user_id").(string)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		//return nil, ErrUnAuthorized
+	}
+	res, err := api.Interactor.UseCase.GetQuestionsAnswers(ctx, userId)
 
 	return res, err
 
 }
 
-func (api *API) InsertQuestion(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (api *API) InsertQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	userId, ok := ctx.Value("user_id").(string)
 	if !ok {
 		w.WriteHeader(http.StatusUnauthorized)
-		return nil, ErrUnAuthorized
+		//return nil, ErrUnAuthorized
 	}
 	user, err := api.Interactor.UseCase.GetUser(ctx, userId)
 	if err != nil {
-		return nil, err
+		//return nil, err
 	}
 	if user.UserType != constant.UserRoleAdmin {
 		w.WriteHeader(http.StatusUnauthorized)
-		return nil, ErrUnAuthorized
+		//return nil, ErrUnAuthorized
 	}
-	_, err=api.InsertQuestionAndUploadFile(ctx, r)
-	if err!=nil{
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`<script>alert("upload successfull");</script>`))
+
+	qCount, err := api.Interactor.UseCase.GetQuestionsCount(ctx)
+	if err != nil {
+		log.Println(err)
 	}
-	return nil,err
+
+	var qCountTotal, qAnswered int64
+
+	for _, qc := range qCount {
+		if qc.AnsweredByUsers >= int64(constant.UserCount) {
+			qAnswered = qAnswered + qc.Count
+		}
+		qCountTotal = qCountTotal + qc.Count
+	}
+	_, err = api.InsertQuestionAndUploadFile(ctx, r)
+	templateData := struct {
+		Message       string
+		QuestionCount int64
+		AnsweredCount int64
+	}{}
+	if err == nil {
+		templateData.Message = "Upload Successful, Insert next Question"
+	}
+	templateData.QuestionCount = qCountTotal
+	templateData.AnsweredCount = qAnswered
+	w.Header().Set("Content-Type", "text/html")
+
+	if err := templatego2.TemplateMap["upload"].Execute(w, templateData); err != nil {
+		log.Printf("[ERROR] [Question] Render page error: %s\n", err)
+	}
+
+}
+
+func (api *API) CreateQuiz(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userId, ok := ctx.Value("user_id").(string)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		//return nil, ErrUnAuthorized
+	}
+	user, err := api.Interactor.UseCase.GetUser(ctx, userId)
+	if err != nil {
+		//return nil, err
+	}
+	if user.UserType != constant.UserRoleAdmin {
+		w.WriteHeader(http.StatusUnauthorized)
+		//return nil, ErrUnAuthorized
+	}
+
 }
 
 // This function returns the filenames(to save in database) of the saved file
@@ -243,6 +302,74 @@ func (api *API) InsertQuestionAndUploadFile(ctx context.Context, r *http.Request
 		fileNames = append(fileNames, fh.Filename)
 	}
 
+	return fileNames, nil
+}
+
+func (api *API) InsertQuestionRandom(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	userId, ok := ctx.Value("user_id").(string)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		//return nil, ErrUnAuthorized
+	}
+	user, err := api.Interactor.UseCase.GetUser(ctx, userId)
+	if err != nil {
+		//return nil, err
+	}
+	if user.UserType != constant.UserRoleAdmin {
+		w.WriteHeader(http.StatusUnauthorized)
+		//return nil, ErrUnAuthorized
+	}
+	_, err = api.InsertQuestionAndUploadFileRandom(ctx, r)
+	templateData := struct {
+		Message string
+	}{}
+	if err == nil {
+		templateData.Message = "Upload Successful, Insert next Question"
+	}
+	w.Header().Set("Content-Type", "text/html")
+
+	if err := templatego2.TemplateMap["upload_random"].Execute(w, templateData); err != nil {
+		log.Printf("[ERROR] [Question] Render page error: %s\n", err)
+	}
+
+}
+
+func (api *API) InsertQuestionAndUploadFileRandom(ctx context.Context, r *http.Request) ([]string, error) {
+
+	var fileNames []string
+	err := r.ParseMultipartForm(64 << 20) // max size used by FormFile
+	if err != nil {
+		return fileNames, err
+	}
+	fhsQues := r.MultipartForm.File["ques_files"]
+
+	var i int
+	for _, fh := range fhsQues {
+
+		ques := r.FormValue("question_text")
+		imageId, err := api.FileUpload(ctx, fh)
+		qid, err := api.Interactor.UseCase.InsertQuestion(ctx, ques, "./upload/"+imageId)
+		if err != nil {
+			log.Println(err)
+		}
+
+		fhsAns := r.MultipartForm.File["ans_files"]
+
+		le := len(fhsAns)
+		for j := 0; j < 5 && i < le; j++ {
+			imageId, err := api.FileUpload(ctx, fhsAns[i])
+			_, err = api.Interactor.UseCase.InsertAns(ctx, qid, "./upload/"+imageId)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
+			fileNames = append(fileNames, fhsAns[i].Filename)
+			i++
+		}
+	}
 	return fileNames, nil
 }
 

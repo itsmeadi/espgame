@@ -1,8 +1,7 @@
 package mysql
 
 import (
-	config2 "github.com/ESPGame/src/interfaces/config"
-
+	"github.com/ESPGame/src/interfaces/config"
 	//	"database/sql"
 	"github.com/jmoiron/sqlx"
 
@@ -21,7 +20,7 @@ func init() {
 	var err error
 	Conn = &DB{}
 
-	Conn.sqlConn, err = sqlx.Open("mysql", config2.DbStr)
+	Conn.sqlConn, err = sqlx.Open("mysql", config.DbStr)
 	if err != nil {
 		log.Fatal("Cannot init mysql err=", err)
 	}

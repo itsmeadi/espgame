@@ -1,0 +1,19 @@
+<html>
+
+<body>
+{{.Message}}
+<form action="/insert_question" method="post" enctype="multipart/form-data">
+    Question <input type="text" placeholder="Match the images" value="Match the images" name="question_text"><br>
+    QuestionMedia <input type="file" name="ques_files" value="Upload Question Media"/><br>
+    AnswerMedia <input type="file" name="ans_files" value="Upload Answer Media" multiple="multiple"/><br>
+    <input type="submit">
+    <a href="/signout">Signout</a>
+
+</form>
+
+
+Stats-------------<br/>
+Total Questions={{.QuestionCount}}
+Answered={{.AnsweredCount}}
+</body>
+</html>
