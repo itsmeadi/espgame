@@ -6,9 +6,9 @@ run script init.sh
 init.sh will import db install dependencies
 
 To run the server use command
-go run app.go
+go run src/app.go
 
-open http://l:8080/login.html
+open http://localhost:8080/login.html
 
 
 login as admin by credentials as to insert questions or view stats
@@ -18,6 +18,8 @@ Password:admin
 Create a new user to play the game
 
 To insert new Questions login as admin, u'll be redirected to add question page
+
+
 ABOUT
 
 The application is written in GoLang, it uses The Clean Architecture

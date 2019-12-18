@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
+dep init
 dep ensure -v
-mysql -u root < files/espdump.sql
+mysql -u root ESPGAME < files/espdump.sql
 
 echo "use id=admin, password=admin"
 
