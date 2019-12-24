@@ -4,6 +4,12 @@ ESPGAME written in Golang as a Web app
 
 ### SETUP
 
+- install dep(dependency resolving tool)
+    
+    macOS- brew install dep
+    
+    linux- apt-get install dep
+    
 - Modify DB mysql user in init.sh and src/interfaces/config/config.go
 - run script init.sh
 - init.sh will import db install dependencies
@@ -38,3 +44,16 @@ https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html
 
 CheckList
 https://docs.google.com/document/d/1wkcQ9KL9zewMTE2Q40cm31vv0a1Auv-xO8iCcmSPxFg/edit?usp=sharing
+
+### Updated
+Although i have updated the script to automate these commands, if it doesnt work
+- go to $GOPATH, can be obtained by command "go env GOPATH"
+- clone or copy the app to the GOPATH folder
+- Initialize database
+- mysqladmin -u root -p create ESPGAME
+- mysql -u root ESPGAME < files/espdump.sql
+
+- run command "dep ensure -v"
+- run server "go run src/app.go"
+- goto login page --http://localhost:8080/login.html
+- Use id=admin, password=admin

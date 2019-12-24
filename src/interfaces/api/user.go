@@ -374,7 +374,7 @@ func (api *API) InsertQuestionAndUploadFileRandom(ctx context.Context, r *http.R
 }
 
 func (api *API) FileUpload(ctx context.Context, fh *multipart.FileHeader) (string, error) {
-	uuid, _ := uuid.NewV4()
+	uuid := uuid.NewV4()
 	imageId := uuid.String()
 	file, err := fh.Open()
 	if file != nil {
