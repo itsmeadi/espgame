@@ -8,18 +8,18 @@
   version = "v1.4.1"
 
 [[projects]]
+  name = "github.com/gofrs/uuid"
+  packages = ["."]
+  revision = "6b08a5c5172ba18946672b49749cde22873dd7c2"
+  version = "v3.2.0"
+
+[[projects]]
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
     "reflectx"
   ]
   revision = "d161d7a76b5661016ad0b085869f77fd410f3e6a"
-  version = "v1.2.0"
-
-[[projects]]
-  name = "github.com/satori/go.uuid"
-  packages = ["."]
-  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
 
 [[projects]]
@@ -31,6 +31,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b5e66bb17fc40cd70fc082a8589db2f53910add88b6387915bb8e247138ce8a9"
+  inputs-digest = "c4eae4a17a55ff69e41c8a91fe29f77bf1ec825adbf8fcc4b046a113b08edeff"
   solver-name = "gps-cdcl"
   solver-version = 1
